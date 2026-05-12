@@ -5,602 +5,481 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>daily log</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css" />
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
+:root { --bg:#FAFAF8; --card:#FFF; --text:#1C1B1A; --muted:#6B6B68; --border:#E5E4DF; }
+body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
 
-:root {
-  --bg: #FAFAF8;
-  --card: #FFFFFF;
-  --text: #1C1B1A;
-  --muted: #6B6B68;
-  --border: #E5E4DF;
-  --border-hover: #CCCCC8;
-}
+#configScreen { min-height:100vh; display:flex; align-items:center; justify-content:center; padding:2rem; }
+.cfg-card { background:var(--card); border:1px solid var(--border); border-radius:18px; padding:2.5rem; max-width:460px; width:100%; }
+.cfg-title { font-family:'DM Serif Display',serif; font-size:26px; margin-bottom:.4rem; }
+.cfg-sub { font-size:14px; color:var(--muted); margin-bottom:1.75rem; line-height:1.6; }
+.cfg-label { font-size:12px; font-weight:500; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); margin-bottom:6px; display:block; }
+.cfg-input { width:100%; font-family:'DM Sans',sans-serif; font-size:14px; border:1px solid var(--border); border-radius:9px; padding:10px 14px; background:var(--bg); color:var(--text); outline:none; margin-bottom:14px; }
+.cfg-btn { width:100%; font-family:'DM Sans',sans-serif; font-size:14px; font-weight:500; padding:11px; border-radius:9px; border:none; background:#1C1B1A; color:#fff; cursor:pointer; margin-top:4px; }
+.cfg-btn:disabled { opacity:.5; cursor:not-allowed; }
+.cfg-err { font-size:13px; color:#DC2626; margin-top:10px; display:none; }
+.cfg-err.on { display:block; }
+.cfg-hint { font-size:12px; color:var(--muted); margin-top:14px; line-height:1.6; }
 
-body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+#app { display:none; max-width:700px; margin:0 auto; padding:1.5rem 1rem 4rem; }
+.hdr { margin-bottom:2rem; }
+.hdr-top { display:flex; align-items:flex-end; justify-content:space-between; }
+.app-title { font-family:'DM Serif Display',serif; font-size:28px; }
+.app-date { font-size:13px; color:var(--muted); font-weight:300; }
+.tabs { display:flex; border-bottom:1.5px solid var(--border); margin-top:1.5rem; }
+.tab { font-size:13px; color:var(--muted); padding:.5rem 1rem .6rem; cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-1.5px; transition:color .2s,border-color .2s; }
+.tab.on { color:var(--text); border-color:var(--text); font-weight:500; }
+.view { display:none; }
+.view.on { display:block; }
 
-/* ── Config screen ── */
-#configScreen {
-  min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem;
-}
-.config-card {
-  background: var(--card); border: 1px solid var(--border); border-radius: 18px;
-  padding: 2.5rem; max-width: 460px; width: 100%;
-}
-.config-title { font-family: 'DM Serif Display', serif; font-size: 26px; margin-bottom: 0.4rem; }
-.config-sub { font-size: 14px; color: var(--muted); margin-bottom: 1.75rem; line-height: 1.6; }
-.config-label { font-size: 12px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; display: block; }
-.config-input {
-  width: 100%; font-family: 'DM Sans', sans-serif; font-size: 14px;
-  border: 1px solid var(--border); border-radius: 9px; padding: 10px 14px;
-  background: var(--bg); color: var(--text); outline: none; margin-bottom: 14px;
-  transition: border-color 0.15s;
-}
-.config-input:focus { border-color: var(--border-hover); }
-.config-btn {
-  width: 100%; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500;
-  padding: 11px; border-radius: 9px; border: none; background: #1C1B1A; color: #fff;
-  cursor: pointer; transition: opacity 0.15s; margin-top: 4px;
-}
-.config-btn:hover { opacity: 0.82; }
-.config-hint { font-size: 12px; color: var(--muted); margin-top: 14px; line-height: 1.6; }
-.config-hint a { color: var(--text); }
-.config-error { font-size: 13px; color: #DC2626; margin-top: 10px; }
+.sbar { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:1.25rem; min-height:26px; align-items:center; }
+.spill { font-size:11px; padding:3px 9px; border-radius:20px; font-weight:500; }
 
-/* ── App ── */
-#app { display: none; max-width: 700px; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
+.bgrid { display:flex; flex-direction:column; gap:10px; }
+.bcard { background:var(--card); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
+.bhdr { display:flex; align-items:center; gap:12px; padding:14px 16px 12px; cursor:pointer; user-select:none; }
+.bdot { width:12px; height:12px; border-radius:50%; flex-shrink:0; }
+.bname { font-size:15px; font-weight:500; flex:1; }
+.bcnt { font-size:12px; color:var(--muted); }
+.bacts { display:flex; gap:6px; }
+.ibtn { width:30px; height:30px; border-radius:8px; border:none; background:transparent; cursor:pointer; font-size:18px; color:var(--muted); display:flex; align-items:center; justify-content:center; transition:background .15s; }
+.ibtn:hover { background:var(--bg); color:var(--text); }
 
-.header { margin-bottom: 2rem; }
-.header-top { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 0.25rem; }
-.app-title { font-family: 'DM Serif Display', serif; font-size: 28px; }
-.today-date { font-size: 13px; color: var(--muted); font-weight: 300; letter-spacing: 0.04em; }
-.tab-row { display: flex; border-bottom: 1.5px solid var(--border); margin-top: 1.5rem; }
-.tab { font-size: 13px; font-weight: 400; color: var(--muted); padding: 0.5rem 1rem 0.6rem; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1.5px; transition: color 0.2s, border-color 0.2s; }
-.tab.active { color: var(--text); border-color: var(--text); font-weight: 500; }
+.brow { display:flex; gap:5px; flex-wrap:wrap; padding:0 16px 12px; min-height:28px; align-items:center; }
+.blk { width:22px; height:22px; border-radius:5px; position:relative; flex-shrink:0; }
+.blk:hover .tip { display:block; }
+.tip { display:none; position:absolute; bottom:28px; left:50%; transform:translateX(-50%); background:#1C1B1A; color:#fff; font-size:11px; padding:4px 8px; border-radius:6px; white-space:nowrap; z-index:10; pointer-events:none; max-width:200px; }
+.emsg { font-size:12px; color:#BDBDBA; font-style:italic; }
 
-.view { display: none; }
-.view.active { display: block; }
+.aform { padding:0 16px 14px; display:none; }
+.aform.on { display:block; }
+.arow { display:flex; gap:8px; }
+.ainp { flex:1; font-family:'DM Sans',sans-serif; font-size:13px; border:1px solid var(--border); border-radius:8px; padding:7px 10px; background:var(--bg); color:var(--text); outline:none; }
+.abtn { font-family:'DM Sans',sans-serif; font-size:13px; font-weight:500; padding:7px 14px; border-radius:8px; border:none; cursor:pointer; color:#fff; white-space:nowrap; }
+.abtn:disabled { opacity:.5; cursor:not-allowed; }
+.aerr { font-size:12px; color:#DC2626; margin-top:5px; display:none; }
+.aerr.on { display:block; }
 
-/* ── Loading ── */
-.loading { font-size: 13px; color: var(--muted); font-style: italic; padding: 1rem 0; }
+.epanel { border-top:1px solid var(--border); padding:12px 16px; display:none; }
+.epanel.on { display:block; }
+.elbl { font-size:11px; font-weight:500; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); margin-bottom:8px; }
+.nlist { display:flex; flex-direction:column; gap:5px; margin-bottom:8px; }
+.nitem { display:flex; align-items:center; gap:8px; font-size:13px; }
+.nitem input[type=checkbox] { width:14px; height:14px; cursor:pointer; flex-shrink:0; }
+.nitem.done span { text-decoration:line-through; color:var(--muted); }
+.ndel { background:none; border:none; cursor:pointer; color:#ccc; font-size:18px; margin-left:auto; }
+.ndel:hover { color:#DC2626; }
+.nrow { display:flex; gap:6px; }
+.ninp { flex:1; font-family:'DM Sans',sans-serif; font-size:13px; border:1px solid var(--border); border-radius:8px; padding:6px 10px; background:var(--bg); color:var(--text); outline:none; }
+.nadd { font-family:'DM Sans',sans-serif; font-size:13px; font-weight:500; padding:6px 12px; border-radius:8px; border:1px solid var(--border); background:var(--bg); color:var(--text); cursor:pointer; }
+.nadd:hover { background:var(--border); }
 
-/* ── Status bar ── */
-.status-bar { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 1.25rem; min-height: 26px; align-items: center; }
-.status-pill { font-size: 11px; padding: 3px 9px; border-radius: 20px; font-weight: 500; }
+.calhdr { display:flex; align-items:center; justify-content:space-between; margin-bottom:1.25rem; }
+.calmo { font-family:'DM Serif Display',serif; font-size:22px; }
+.calnav { display:flex; gap:6px; }
+.calnav button { width:32px; height:32px; border-radius:8px; border:1px solid var(--border); background:var(--card); cursor:pointer; font-size:18px; color:var(--text); }
+.calgrid { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; }
+.cdlbl { font-size:11px; color:var(--muted); text-align:center; font-weight:500; padding-bottom:4px; }
+.ccell { border-radius:8px; border:1px solid var(--border); padding:4px; min-height:52px; background:var(--card); cursor:pointer; display:flex; flex-direction:column; }
+.ccell:hover { box-shadow:0 1px 8px rgba(0,0,0,.07); }
+.ccell.empty { background:transparent; border-color:transparent; cursor:default; }
+.ccell.today { border-color:#999; }
+.cnum { font-size:11px; color:var(--muted); margin-bottom:3px; }
+.ccell.today .cnum { font-weight:600; color:var(--text); }
+.cdots { display:flex; flex-wrap:wrap; gap:2px; }
+.cdot { width:8px; height:8px; border-radius:2px; }
+.ddetail { margin-top:1.25rem; background:var(--card); border:1px solid var(--border); border-radius:14px; padding:16px; display:none; }
+.ddetail.on { display:block; }
+.dtitle { font-family:'DM Serif Display',serif; font-size:18px; margin-bottom:12px; }
+.dentry { display:flex; gap:10px; margin-bottom:8px; }
+.dedot { width:10px; height:10px; border-radius:3px; margin-top:4px; flex-shrink:0; }
+.debkt { font-size:12px; color:var(--muted); }
+.denote { font-size:14px; }
+.dempty { font-size:13px; color:var(--muted); font-style:italic; }
 
-/* ── Buckets ── */
-.buckets-grid { display: flex; flex-direction: column; gap: 10px; }
-
-.bucket-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; transition: box-shadow 0.2s; }
-.bucket-card:hover { box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
-
-.bucket-header { display: flex; align-items: center; gap: 12px; padding: 14px 16px 12px; cursor: pointer; }
-.bucket-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
-.bucket-name { font-size: 15px; font-weight: 500; flex: 1; }
-.bucket-count { font-size: 12px; color: var(--muted); }
-.bucket-actions { display: flex; gap: 6px; align-items: center; }
-
-.btn-icon { width: 30px; height: 30px; border-radius: 8px; border: none; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; color: var(--muted); transition: background 0.15s, color 0.15s; }
-.btn-icon:hover { background: var(--bg); color: var(--text); }
-
-.blocks-row { display: flex; gap: 5px; flex-wrap: wrap; padding: 0 16px 12px; min-height: 28px; align-items: center; }
-.block { width: 22px; height: 22px; border-radius: 5px; cursor: pointer; position: relative; transition: transform 0.15s; flex-shrink: 0; }
-.block:hover { transform: scale(1.15); }
-.block-tooltip { display: none; position: absolute; bottom: 28px; left: 50%; transform: translateX(-50%); background: #1C1B1A; color: #fff; font-size: 11px; padding: 4px 8px; border-radius: 6px; white-space: nowrap; z-index: 10; pointer-events: none; max-width: 200px; overflow: hidden; text-overflow: ellipsis; }
-.block:hover .block-tooltip { display: block; }
-.empty-msg { font-size: 12px; color: #BDBDBA; font-style: italic; }
-
-.add-form { padding: 0 16px 14px; display: none; }
-.add-form.open { display: block; }
-.add-form-inner { display: flex; gap: 8px; align-items: center; }
-.add-input { flex: 1; font-family: 'DM Sans', sans-serif; font-size: 13px; border: 1px solid var(--border); border-radius: 8px; padding: 7px 10px; background: var(--bg); color: var(--text); outline: none; transition: border-color 0.15s; }
-.add-input:focus { border-color: var(--border-hover); }
-.btn-add { font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; padding: 7px 14px; border-radius: 8px; border: none; cursor: pointer; color: #fff; transition: opacity 0.15s; white-space: nowrap; }
-.btn-add:hover { opacity: 0.85; }
-.btn-add:disabled { opacity: 0.5; cursor: not-allowed; }
-
-.expand-panel { border-top: 1px solid var(--border); padding: 12px 16px; display: none; }
-.expand-panel.open { display: block; }
-.expand-label { font-size: 11px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
-.future-list { display: flex; flex-direction: column; gap: 5px; margin-bottom: 8px; }
-.future-item { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text); }
-.future-item input[type=checkbox] { width: 14px; height: 14px; cursor: pointer; flex-shrink: 0; }
-.future-item.done span { text-decoration: line-through; color: var(--muted); }
-.future-item .del-note { background: none; border: none; cursor: pointer; color: #ccc; font-size: 16px; margin-left: auto; line-height: 1; flex-shrink: 0; }
-.future-item .del-note:hover { color: #DC2626; }
-.future-input-row { display: flex; gap: 6px; }
-.future-input { flex: 1; font-family: 'DM Sans', sans-serif; font-size: 13px; border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; background: var(--bg); color: var(--text); outline: none; }
-.future-input:focus { border-color: var(--border-hover); }
-.btn-future-add { font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); cursor: pointer; white-space: nowrap; }
-.btn-future-add:hover { background: var(--border); }
-
-/* ── Calendar ── */
-.cal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; }
-.cal-month { font-family: 'DM Serif Display', serif; font-size: 22px; }
-.cal-nav { display: flex; gap: 6px; }
-.cal-nav button { width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--border); background: var(--card); cursor: pointer; font-size: 16px; color: var(--text); display: flex; align-items: center; justify-content: center; }
-.cal-nav button:hover { background: var(--bg); }
-.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
-.cal-day-label { font-size: 11px; color: var(--muted); text-align: center; font-weight: 500; padding-bottom: 4px; letter-spacing: 0.04em; }
-.cal-cell { border-radius: 8px; border: 1px solid var(--border); padding: 4px; min-height: 52px; background: var(--card); cursor: pointer; transition: box-shadow 0.15s; display: flex; flex-direction: column; }
-.cal-cell:hover { box-shadow: 0 1px 8px rgba(0,0,0,0.07); }
-.cal-cell.empty { background: transparent; border-color: transparent; cursor: default; box-shadow: none; }
-.cal-cell.today { border-color: #999; }
-.cal-num { font-size: 11px; color: var(--muted); margin-bottom: 3px; }
-.cal-cell.today .cal-num { font-weight: 600; color: var(--text); }
-.cal-dots { display: flex; flex-wrap: wrap; gap: 2px; }
-.cal-dot { width: 8px; height: 8px; border-radius: 2px; }
-.day-detail { margin-top: 1.25rem; background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 16px; }
-.day-detail-title { font-family: 'DM Serif Display', serif; font-size: 18px; margin-bottom: 12px; }
-.day-entry { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 8px; }
-.day-entry-dot { width: 10px; height: 10px; border-radius: 3px; margin-top: 4px; flex-shrink: 0; }
-.day-entry-info { display: flex; flex-direction: column; }
-.day-entry-bucket { font-size: 12px; color: var(--muted); }
-.day-entry-note { font-size: 14px; color: var(--text); }
-.day-empty { font-size: 13px; color: var(--muted); font-style: italic; }
-.hidden { display: none !important; }
-
-/* ── Manage ── */
-.settings-note { font-size: 13px; color: var(--muted); margin-bottom: 1.25rem; line-height: 1.6; }
-.manage-title { font-size: 12px; font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
-.manage-list { display: flex; flex-direction: column; gap: 6px; }
-.manage-item { display: flex; align-items: center; gap: 10px; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; }
-.manage-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-.manage-item span { flex: 1; font-size: 14px; }
-.btn-del { background: none; border: none; cursor: pointer; color: #ccc; font-size: 18px; line-height: 1; }
-.btn-del:hover { color: #DC2626; }
-.add-bucket-form { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; align-items: center; }
-.new-bucket-name { font-family: 'DM Sans', sans-serif; font-size: 13px; border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; background: var(--bg); color: var(--text); outline: none; flex: 1; min-width: 140px; }
-.color-options { display: flex; gap: 5px; align-items: center; flex-wrap: wrap; }
-.color-swatch { width: 22px; height: 22px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: border-color 0.15s; flex-shrink: 0; }
-.color-swatch.selected { border-color: var(--text); }
-.btn-add-bucket { font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); cursor: pointer; white-space: nowrap; }
-.btn-add-bucket:hover { background: var(--border); }
-
-.disconnect-btn { font-family: 'DM Sans', sans-serif; font-size: 12px; color: var(--muted); background: none; border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px; cursor: pointer; margin-top: 2rem; }
-.disconnect-btn:hover { color: #DC2626; border-color: #DC2626; }
+.mnote { font-size:13px; color:var(--muted); margin-bottom:1.25rem; line-height:1.6; }
+.mtitle { font-size:12px; font-weight:500; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); margin-bottom:10px; }
+.mlist { display:flex; flex-direction:column; gap:6px; }
+.mitem { display:flex; align-items:center; gap:10px; background:var(--card); border:1px solid var(--border); border-radius:10px; padding:10px 14px; }
+.mdot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+.mitem span { flex:1; font-size:14px; }
+.mdel { background:none; border:none; cursor:pointer; color:#ccc; font-size:20px; }
+.mdel:hover { color:#DC2626; }
+.madd-row { display:flex; gap:8px; margin-top:12px; flex-wrap:wrap; align-items:center; }
+.mname { font-family:'DM Sans',sans-serif; font-size:13px; border:1px solid var(--border); border-radius:8px; padding:8px 12px; background:var(--bg); color:var(--text); outline:none; flex:1; min-width:140px; }
+.mcolors { display:flex; gap:5px; align-items:center; flex-wrap:wrap; }
+.mswatch { width:22px; height:22px; border-radius:50%; cursor:pointer; border:3px solid transparent; flex-shrink:0; }
+.mswatch.on { border-color:var(--text); }
+.mabtn { font-family:'DM Sans',sans-serif; font-size:13px; font-weight:500; padding:8px 14px; border-radius:8px; border:1px solid var(--border); background:var(--bg); color:var(--text); cursor:pointer; white-space:nowrap; }
+.mabtn:hover { background:var(--border); }
+.merr { font-size:12px; color:#DC2626; margin-top:8px; display:none; }
+.merr.on { display:block; }
+.discbtn { font-family:'DM Sans',sans-serif; font-size:12px; color:var(--muted); background:none; border:1px solid var(--border); border-radius:8px; padding:6px 12px; cursor:pointer; margin-top:2rem; }
+.discbtn:hover { color:#DC2626; border-color:#DC2626; }
 </style>
 </head>
 <body>
 
-<!-- ── Config / Setup Screen ── -->
 <div id="configScreen">
-  <div class="config-card">
-    <div class="config-title">daily log</div>
-    <p class="config-sub">Connect your Supabase project to get started. Your credentials are saved locally in your browser.</p>
-    <label class="config-label" for="supabaseUrl">Supabase project URL</label>
-    <input class="config-input" id="supabaseUrl" type="text" placeholder="https://xxxxxxxxxxxx.supabase.co" autocomplete="off" spellcheck="false" />
-    <label class="config-label" for="supabaseKey">Anon / public API key</label>
-    <input class="config-input" id="supabaseKey" type="text" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6Ikp..." autocomplete="off" spellcheck="false" />
-    <button class="config-btn" onclick="connectSupabase()">connect &amp; open app</button>
-    <div class="config-error hidden" id="configError"></div>
-    <p class="config-hint">
-      Find these in your Supabase dashboard under <strong>Project Settings → API</strong>.<br/>
-      Your key never leaves your browser.
-    </p>
+  <div class="cfg-card">
+    <div class="cfg-title">daily log</div>
+    <p class="cfg-sub">Connect your Supabase project to get started. Credentials are saved in your browser.</p>
+    <label class="cfg-label">Supabase project URL</label>
+    <input class="cfg-input" id="sbUrl" type="url" placeholder="https://xxxx.supabase.co" autocomplete="off" spellcheck="false" />
+    <label class="cfg-label">Anon / legacy API key</label>
+    <input class="cfg-input" id="sbKey" type="text" placeholder="eyJhbGciOi..." autocomplete="off" spellcheck="false" />
+    <button class="cfg-btn" id="conBtn" onclick="doConnect()">connect &amp; open app</button>
+    <div class="cfg-err" id="cfgErr"></div>
+    <p class="cfg-hint">Find these under <strong>Settings &rarr; API Keys &rarr; Legacy anon key</strong> in Supabase.</p>
   </div>
 </div>
 
-<!-- ── Main App ── -->
 <div id="app">
-  <div class="header">
-    <div class="header-top">
+  <div class="hdr">
+    <div class="hdr-top">
       <div class="app-title">daily log</div>
-      <div class="today-date" id="todayLabel"></div>
+      <div class="app-date" id="appDate"></div>
     </div>
-    <div class="tab-row">
-      <div class="tab active" onclick="switchTab('buckets')">today</div>
-      <div class="tab" onclick="switchTab('calendar')">history</div>
-      <div class="tab" onclick="switchTab('manage')">buckets</div>
+    <div class="tabs">
+      <div class="tab on" onclick="goTab('today')">today</div>
+      <div class="tab" onclick="goTab('history')">history</div>
+      <div class="tab" onclick="goTab('manage')">buckets</div>
     </div>
   </div>
 
-  <div id="view-buckets" class="view active">
-    <div class="status-bar" id="statusBar"><span class="loading">Loading…</span></div>
-    <div class="buckets-grid" id="bucketsGrid"></div>
+  <div id="vToday" class="view on">
+    <div class="sbar" id="sbar"><span style="font-size:13px;color:var(--muted);font-style:italic">Loading&hellip;</span></div>
+    <div class="bgrid" id="bgrid"></div>
   </div>
 
-  <div id="view-calendar" class="view">
-    <div class="cal-header">
-      <div class="cal-month" id="calMonthLabel"></div>
-      <div class="cal-nav">
-        <button onclick="changeMonth(-1)">‹</button>
-        <button onclick="changeMonth(1)">›</button>
+  <div id="vHistory" class="view">
+    <div class="calhdr">
+      <div class="calmo" id="calmo"></div>
+      <div class="calnav">
+        <button onclick="chMo(-1)">&#8249;</button>
+        <button onclick="chMo(1)">&#8250;</button>
       </div>
     </div>
-    <div class="cal-grid" id="calGrid"></div>
-    <div id="dayDetail" class="day-detail hidden"></div>
+    <div class="calgrid" id="calgrid"></div>
+    <div class="ddetail" id="ddetail"></div>
   </div>
 
-  <div id="view-manage" class="view">
-    <p class="settings-note">Add or remove buckets. Deleting a bucket removes it from future views but keeps your history entries intact.</p>
-    <div class="manage-title">your buckets</div>
-    <div class="manage-list" id="manageList"></div>
-    <div class="add-bucket-form">
-      <input class="new-bucket-name" id="newBucketName" placeholder="New bucket name…" onkeydown="if(event.key==='Enter')addBucket()" />
-      <div class="color-options" id="colorSwatches"></div>
-      <button class="btn-add-bucket" onclick="addBucket()">+ add</button>
+  <div id="vManage" class="view">
+    <p class="mnote">Add or remove buckets. Removing keeps past history intact.</p>
+    <div class="mtitle">your buckets</div>
+    <div class="mlist" id="mlist"></div>
+    <div class="madd-row">
+      <input class="mname" id="mname" placeholder="New bucket name&hellip;" onkeydown="if(event.key==='Enter')doAddBucket()" />
+      <div class="mcolors" id="mcolors"></div>
+      <button class="mabtn" onclick="doAddBucket()">+ add</button>
     </div>
-    <br/>
-    <button class="disconnect-btn" onclick="disconnect()">disconnect &amp; change credentials</button>
+    <div class="merr" id="merr"></div>
+    <button class="discbtn" onclick="doDisconnect()">disconnect &amp; change credentials</button>
   </div>
 </div>
 
 <script>
-// ── Color palette ──
 const COLORS = [
-  { name:'purple', solid:'#7C3AED', light:'#EDE9FE' },
-  { name:'yellow', solid:'#D97706', light:'#FEF3C7' },
-  { name:'pink',   solid:'#DB2777', light:'#FCE7F3' },
-  { name:'red',    solid:'#DC2626', light:'#FEE2E2' },
-  { name:'green',  solid:'#059669', light:'#D1FAE5' },
-  { name:'blue',   solid:'#2563EB', light:'#DBEAFE' },
-  { name:'teal',   solid:'#0D9488', light:'#CCFBF1' },
-  { name:'orange', solid:'#EA580C', light:'#FFEDD5' },
+  {n:'purple',s:'#7C3AED',l:'#EDE9FE'},
+  {n:'yellow',s:'#D97706',l:'#FEF3C7'},
+  {n:'pink',  s:'#DB2777',l:'#FCE7F3'},
+  {n:'red',   s:'#DC2626',l:'#FEE2E2'},
+  {n:'green', s:'#059669',l:'#D1FAE5'},
+  {n:'blue',  s:'#2563EB',l:'#DBEAFE'},
+  {n:'teal',  s:'#0D9488',l:'#CCFBF1'},
+  {n:'orange',s:'#EA580C',l:'#FFEDD5'},
+];
+const DEFAULTS = [
+  {name:'Job Application',       color:'purple'},
+  {name:'Yoga Teacher Training', color:'yellow'},
+  {name:'Music Production',      color:'pink'},
+  {name:'Social Media',          color:'red'},
+  {name:'Gig work',              color:'green'},
+  {name:'Admin / Life',          color:'blue'},
 ];
 
-const DEFAULT_BUCKETS = [
-  { name:'Job Application',       color:'purple' },
-  { name:'Yoga Teacher Training', color:'yellow' },
-  { name:'Music Production',      color:'pink'   },
-  { name:'Social Media',          color:'red'    },
-  { name:'Gig work',              color:'green'  },
-  { name:'Admin / Life',          color:'blue'   },
-];
+let sb, buckets=[], entries=[], notes=[];
+let calY, calM, openAdd=null, openExp=null, selColor='purple';
 
-let sb = null;
-let buckets = [];
-let entries = [];
-let futureNotes = [];
-let calYear, calMonth;
-let openAdd = null;
-let openExpand = null;
+const gc = n => COLORS.find(c=>c.n===n)||COLORS[0];
+const tk = () => new Date().toISOString().slice(0,10);
+const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 
-function getColor(name) { return COLORS.find(c => c.name === name) || COLORS[0]; }
-function todayKey() { return new Date().toISOString().slice(0,10); }
+// ── Connect ──
+async function doConnect() {
+  const url = document.getElementById('sbUrl').value.trim().replace(/\/$/,'');
+  const key = document.getElementById('sbKey').value.trim();
+  const err = document.getElementById('cfgErr');
+  const btn = document.getElementById('conBtn');
+  err.className = 'cfg-err';
 
-// ── Supabase connect ──
-async function connectSupabase() {
-  const url = document.getElementById('supabaseUrl').value.trim();
-  const key = document.getElementById('supabaseKey').value.trim();
-  const errEl = document.getElementById('configError');
-  errEl.classList.add('hidden');
-  if (!url || !key) { errEl.textContent = 'Please enter both your URL and API key.'; errEl.classList.remove('hidden'); return; }
+  if (!url || !key) { err.textContent='Please fill in both fields.'; err.className='cfg-err on'; return; }
+
+  btn.disabled = true; btn.textContent = 'connecting\u2026';
   try {
-    const opts = key.startsWith("sb_publishable_") ? { global: { headers: { Authorization: `Bearer ${key}` } } } : {};
-    sb = supabase.createClient(url, key.startsWith("sb_publishable_") ? "anon-placeholder" : key, opts);
-    // Quick test — if tables don't exist yet this will return an error we can show
-    const { error } = await sb.from('buckets').select('id').limit(1);
+    sb = supabase.createClient(url, key);
+    const {error} = await sb.from('buckets').select('id').limit(1);
     if (error) throw error;
-    localStorage.setItem('dl_url', url);
-    localStorage.setItem('dl_key', key);
-    startApp();
+    localStorage.setItem('dl_u', url);
+    localStorage.setItem('dl_k', key);
+    await boot();
   } catch(e) {
-    const msg = e.message || String(e);
-    if (msg.includes('relation') || msg.includes('does not exist')) {
-      errEl.textContent = 'Connected, but the tables are missing. Please run the SQL setup in Supabase first.';
+    btn.disabled=false; btn.textContent='connect & open app';
+    const m = (e.message||String(e)).toLowerCase();
+    if (m.includes('does not exist')||m.includes('relation')||m.includes('schema cache')) {
+      err.textContent = 'Tables missing — please run the SQL setup in Supabase SQL Editor first.';
+    } else if (m.includes('invalid')||m.includes('401')||m.includes('unauthorized')) {
+      err.textContent = 'Invalid API key. Use the Legacy anon key (eyJ...) from Settings \u2192 API Keys.';
+    } else if (m.includes('fetch')||m.includes('network')||m.includes('failed to fetch')) {
+      err.textContent = 'Cannot reach that URL. Double-check your Project URL.';
     } else {
-      errEl.textContent = 'Could not connect: ' + msg + '. Double-check your URL and key.';
+      err.textContent = 'Error: ' + (e.message||String(e));
     }
-    errEl.classList.remove('hidden');
+    err.className = 'cfg-err on';
     sb = null;
   }
 }
 
-function disconnect() {
-  localStorage.removeItem('dl_url');
-  localStorage.removeItem('dl_key');
-  sb = null;
-  document.getElementById('app').style.display = 'none';
-  document.getElementById('configScreen').style.display = 'flex';
-  document.getElementById('supabaseUrl').value = '';
-  document.getElementById('supabaseKey').value = '';
+function doDisconnect() {
+  localStorage.removeItem('dl_u'); localStorage.removeItem('dl_k'); sb=null;
+  document.getElementById('app').style.display='none';
+  document.getElementById('configScreen').style.display='flex';
+  document.getElementById('conBtn').disabled=false;
+  document.getElementById('conBtn').textContent='connect & open app';
+  document.getElementById('sbUrl').value='';
+  document.getElementById('sbKey').value='';
 }
 
-async function startApp() {
-  document.getElementById('configScreen').style.display = 'none';
-  document.getElementById('app').style.display = 'block';
-  setTodayLabel();
-  renderColorSwatches();
-  const now = new Date();
-  calYear = now.getFullYear(); calMonth = now.getMonth();
+// ── Boot ──
+async function boot() {
+  document.getElementById('configScreen').style.display='none';
+  document.getElementById('app').style.display='block';
+  document.getElementById('appDate').textContent = new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+  const now=new Date(); calY=now.getFullYear(); calM=now.getMonth();
+  drawColors();
   await loadAll();
-  render();
+  redraw();
 }
 
-// ── Data loading ──
 async function loadAll() {
-  const [bRes, eRes, nRes] = await Promise.all([
-    sb.from('buckets').select('*').order('sort_order', { ascending: true }),
-    sb.from('entries').select('*').order('created_at', { ascending: true }),
-    sb.from('future_notes').select('*').order('created_at', { ascending: true }),
+  const [br,er,nr] = await Promise.all([
+    sb.from('buckets').select('*').order('sort_order',{ascending:true}),
+    sb.from('entries').select('*').order('created_at',{ascending:true}),
+    sb.from('future_notes').select('*').order('created_at',{ascending:true}),
   ]);
-  buckets = bRes.data || [];
-  entries = eRes.data || [];
-  futureNotes = nRes.data || [];
+  buckets = br.data||[]; entries = er.data||[]; notes = nr.data||[];
 
-  // Seed default buckets if none exist
-  if (buckets.length === 0) {
-    for (let i = 0; i < DEFAULT_BUCKETS.length; i++) {
-      const { data } = await sb.from('buckets').insert({ name: DEFAULT_BUCKETS[i].name, color: DEFAULT_BUCKETS[i].color, sort_order: i }).select().single();
+  // Auto-seed defaults if table is empty
+  if (buckets.length===0) {
+    for (let i=0;i<DEFAULTS.length;i++) {
+      const {data,error} = await sb.from('buckets')
+        .insert({name:DEFAULTS[i].name, color:DEFAULTS[i].color, sort_order:i})
+        .select().single();
       if (data) buckets.push(data);
+      if (error) console.error('seed error',error);
     }
   }
 }
 
-// ── Render ──
-function render() {
-  renderBuckets();
-  renderManage();
-  updateStatusBar();
-}
+function redraw() { drawBuckets(); drawManage(); drawSbar(); }
 
-function setTodayLabel() {
-  document.getElementById('todayLabel').textContent = new Date().toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric' });
-}
-
-function updateStatusBar() {
-  const today = todayKey();
-  const todayEntries = entries.filter(e => e.entry_date === today);
-  const activeBids = [...new Set(todayEntries.map(e => e.bucket_id))];
-  const bar = document.getElementById('statusBar');
-  if (activeBids.length === 0) {
-    bar.innerHTML = '<span style="font-size:13px;color:var(--muted);font-style:italic;">Nothing logged yet today — how did your day go?</span>';
-    return;
-  }
-  bar.innerHTML = activeBids.map(bid => {
-    const b = buckets.find(x => x.id === bid);
-    if (!b) return '';
-    const c = getColor(b.color);
-    return `<span class="status-pill" style="background:${c.light};color:${c.solid}">${b.name}</span>`;
+// ── Status bar ──
+function drawSbar() {
+  const t=tk();
+  const bids=[...new Set(entries.filter(e=>e.entry_date===t).map(e=>e.bucket_id))];
+  const el=document.getElementById('sbar');
+  if (!bids.length) { el.innerHTML='<span style="font-size:13px;color:var(--muted);font-style:italic">Nothing logged yet today \u2014 how did your day go?</span>'; return; }
+  el.innerHTML=bids.map(bid=>{
+    const b=buckets.find(x=>x.id===bid); if(!b) return '';
+    const c=gc(b.color);
+    return `<span class="spill" style="background:${c.l};color:${c.s}">${esc(b.name)}</span>`;
   }).join('');
 }
 
-function renderBuckets() {
-  const grid = document.getElementById('bucketsGrid');
-  const today = todayKey();
-  grid.innerHTML = buckets.map(b => {
-    const c = getColor(b.color);
-    const todayEntries = entries.filter(e => e.bucket_id === b.id && e.entry_date === today);
-    const notes = futureNotes.filter(n => n.bucket_id === b.id);
+// ── Buckets ──
+function drawBuckets() {
+  const t=tk();
+  document.getElementById('bgrid').innerHTML = buckets.map(b=>{
+    const c=gc(b.color);
+    const te=entries.filter(e=>e.bucket_id===b.id&&e.entry_date===t);
+    const bn=notes.filter(n=>n.bucket_id===b.id);
+    const isA=openAdd===b.id, isE=openExp===b.id;
 
-    const blocksHtml = todayEntries.length === 0
-      ? '<span class="empty-msg">no entries yet</span>'
-      : todayEntries.map(e =>
-          `<div class="block" style="background:${c.solid}">
-            <div class="block-tooltip">${escHtml(e.note)}</div>
-          </div>`
-        ).join('');
+    const blocks = te.length
+      ? te.map(e=>`<div class="blk" style="background:${c.s}"><div class="tip">${esc(e.note)}</div></div>`).join('')
+      : '<span class="emsg">no entries yet</span>';
 
-    const notesHtml = notes.length === 0
-      ? '<span style="font-size:12px;color:var(--muted);font-style:italic;">Nothing planned yet.</span>'
-      : notes.map(n =>
-          `<div class="future-item${n.done ? ' done' : ''}">
-            <input type="checkbox" ${n.done ? 'checked' : ''} onchange="toggleNote('${n.id}', this.checked)" />
-            <span>${escHtml(n.text)}</span>
-            <button class="del-note" onclick="deleteNote('${n.id}')">×</button>
-          </div>`
-        ).join('');
+    const nhtml = bn.length
+      ? bn.map(n=>`<div class="nitem${n.done?' done':''}">
+          <input type="checkbox" ${n.done?'checked':''} onchange="doToggleNote('${n.id}',this.checked)"/>
+          <span>${esc(n.text)}</span>
+          <button class="ndel" onclick="doDelNote('${n.id}')">&#215;</button>
+        </div>`).join('')
+      : '<span style="font-size:12px;color:var(--muted);font-style:italic">Nothing planned yet.</span>';
 
-    const isAddOpen = openAdd === b.id;
-    const isExpandOpen = openExpand === b.id;
-
-    return `
-    <div class="bucket-card">
-      <div class="bucket-header" onclick="toggleExpand('${b.id}')">
-        <div class="bucket-dot" style="background:${c.solid}"></div>
-        <div class="bucket-name">${escHtml(b.name)}</div>
-        <div class="bucket-count">${todayEntries.length} today</div>
-        <div class="bucket-actions" onclick="event.stopPropagation()">
-          <button class="btn-icon" title="Add entry" onclick="toggleAdd('${b.id}')">
-            <i class="ti ti-plus" aria-hidden="true"></i>
-          </button>
-          <button class="btn-icon" title="Future ideas">
-            <i class="ti ti-chevron-down" aria-hidden="true" style="transition:transform 0.2s;transform:${isExpandOpen ? 'rotate(180deg)' : 'rotate(0deg)'}"></i>
-          </button>
+    return `<div class="bcard">
+      <div class="bhdr" onclick="doExp('${b.id}')">
+        <div class="bdot" style="background:${c.s}"></div>
+        <div class="bname">${esc(b.name)}</div>
+        <div class="bcnt">${te.length} today</div>
+        <div class="bacts" onclick="event.stopPropagation()">
+          <button class="ibtn" onclick="doOpenAdd('${b.id}')" title="Log entry">+</button>
+          <button class="ibtn" style="font-size:13px;transform:${isE?'rotate(180deg)':'none'};transition:transform .2s" title="Future ideas">&#9660;</button>
         </div>
       </div>
-      <div class="blocks-row">${blocksHtml}</div>
-      <div class="add-form ${isAddOpen ? 'open' : ''}" id="addform-${b.id}">
-        <div class="add-form-inner">
-          <input class="add-input" id="addinput-${b.id}" placeholder="What did you do?" onkeydown="if(event.key==='Enter')submitEntry('${b.id}')" />
-          <button class="btn-add" id="addbtn-${b.id}" style="background:${c.solid}" onclick="submitEntry('${b.id}')">log it</button>
+      <div class="brow">${blocks}</div>
+      <div class="aform ${isA?'on':''}">
+        <div class="arow">
+          <input class="ainp" id="ai${b.id}" placeholder="What did you do?" onkeydown="if(event.key==='Enter')doLog('${b.id}')"/>
+          <button class="abtn" id="ab${b.id}" style="background:${c.s}" onclick="doLog('${b.id}')">log it</button>
         </div>
+        <div class="aerr" id="ae${b.id}"></div>
       </div>
-      <div class="expand-panel ${isExpandOpen ? 'open' : ''}">
-        <div class="expand-label">future ideas &amp; to-dos</div>
-        <div class="future-list">${notesHtml}</div>
-        <div class="future-input-row">
-          <input class="future-input" id="futureinput-${b.id}" placeholder="Add a future idea…" onkeydown="if(event.key==='Enter')addNote('${b.id}')" />
-          <button class="btn-future-add" onclick="addNote('${b.id}')">add</button>
+      <div class="epanel ${isE?'on':''}">
+        <div class="elbl">future ideas &amp; to-dos</div>
+        <div class="nlist">${nhtml}</div>
+        <div class="nrow">
+          <input class="ninp" id="ni${b.id}" placeholder="Add a future idea&hellip;" onkeydown="if(event.key==='Enter')doAddNote('${b.id}')"/>
+          <button class="nadd" onclick="doAddNote('${b.id}')">add</button>
         </div>
       </div>
     </div>`;
   }).join('');
 }
 
-// ── Entry actions ──
-function toggleAdd(id) {
-  openAdd = openAdd === id ? null : id;
-  renderBuckets();
-  if (openAdd) setTimeout(() => { const el = document.getElementById('addinput-' + id); if (el) el.focus(); }, 30);
-}
+function doOpenAdd(id) { openAdd=openAdd===id?null:id; drawBuckets(); if(openAdd) setTimeout(()=>{const e=document.getElementById('ai'+id);if(e)e.focus();},30); }
+function doExp(id) { openExp=openExp===id?null:id; drawBuckets(); if(openExp) setTimeout(()=>{const e=document.getElementById('ni'+id);if(e)e.focus();},30); }
 
-function toggleExpand(id) {
-  openExpand = openExpand === id ? null : id;
-  renderBuckets();
-  if (openExpand) setTimeout(() => { const el = document.getElementById('futureinput-' + id); if (el) el.focus(); }, 30);
-}
-
-async function submitEntry(bucketId) {
-  const el = document.getElementById('addinput-' + bucketId);
-  const btn = document.getElementById('addbtn-' + bucketId);
-  const note = el ? el.value.trim() : '';
+async function doLog(bid) {
+  const inp=document.getElementById('ai'+bid);
+  const btn=document.getElementById('ab'+bid);
+  const errEl=document.getElementById('ae'+bid);
+  const note=inp?inp.value.trim():'';
   if (!note) return;
-  if (btn) btn.disabled = true;
-  const { data, error } = await sb.from('entries').insert({ bucket_id: bucketId, entry_date: todayKey(), note }).select().single();
-  if (!error && data) {
-    entries.push(data);
-    openAdd = null;
+  btn.disabled=true; btn.textContent='saving\u2026';
+  errEl.className='aerr';
+  const {data,error}=await sb.from('entries').insert({bucket_id:bid,entry_date:tk(),note}).select().single();
+  if (error) {
+    errEl.textContent='Save failed: '+error.message;
+    errEl.className='aerr on';
+    btn.disabled=false; btn.textContent='log it';
+  } else {
+    entries.push(data); openAdd=null; redraw();
   }
-  render();
-  updateStatusBar();
 }
 
-async function addNote(bucketId) {
-  const el = document.getElementById('futureinput-' + bucketId);
-  const text = el ? el.value.trim() : '';
+async function doAddNote(bid) {
+  const inp=document.getElementById('ni'+bid);
+  const text=inp?inp.value.trim():'';
   if (!text) return;
-  const { data, error } = await sb.from('future_notes').insert({ bucket_id: bucketId, text, done: false }).select().single();
-  if (!error && data) { futureNotes.push(data); el.value = ''; }
-  renderBuckets();
+  const {data,error}=await sb.from('future_notes').insert({bucket_id:bid,text,done:false}).select().single();
+  if (!error&&data){notes.push(data);inp.value='';}
+  else if(error) alert('Could not save note: '+error.message);
+  drawBuckets();
 }
 
-async function toggleNote(id, done) {
-  await sb.from('future_notes').update({ done }).eq('id', id);
-  const n = futureNotes.find(x => x.id === id);
-  if (n) n.done = done;
-  renderBuckets();
+async function doToggleNote(id,done) {
+  await sb.from('future_notes').update({done}).eq('id',id);
+  const n=notes.find(x=>x.id===id); if(n)n.done=done; drawBuckets();
 }
 
-async function deleteNote(id) {
-  await sb.from('future_notes').delete().eq('id', id);
-  futureNotes = futureNotes.filter(n => n.id !== id);
-  renderBuckets();
+async function doDelNote(id) {
+  await sb.from('future_notes').delete().eq('id',id);
+  notes=notes.filter(n=>n.id!==id); drawBuckets();
 }
 
 // ── Calendar ──
-function renderCalendar() {
-  const label = new Date(calYear, calMonth, 1).toLocaleDateString('en-US', { month:'long', year:'numeric' });
-  document.getElementById('calMonthLabel').textContent = label;
-  const grid = document.getElementById('calGrid');
-  const days = ['Su','Mo','Tu','We','Th','Fr','Sa'];
-  let html = days.map(d => `<div class="cal-day-label">${d}</div>`).join('');
-  const first = new Date(calYear, calMonth, 1).getDay();
-  const total = new Date(calYear, calMonth + 1, 0).getDate();
-  for (let i = 0; i < first; i++) html += '<div class="cal-cell empty"></div>';
-  const todayStr = todayKey();
-  for (let d = 1; d <= total; d++) {
-    const key = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const dayEntries = entries.filter(e => e.entry_date === key);
-    const bids = [...new Set(dayEntries.map(e => e.bucket_id))];
-    const isToday = key === todayStr;
-    const dots = bids.map(bid => {
-      const b = buckets.find(x => x.id === bid);
-      return b ? `<div class="cal-dot" style="background:${getColor(b.color).solid}" title="${escHtml(b.name)}"></div>` : '';
-    }).join('');
-    html += `<div class="cal-cell${isToday ? ' today' : ''}" onclick="showDayDetail('${key}')">
-      <div class="cal-num">${d}</div>
-      <div class="cal-dots">${dots}</div>
-    </div>`;
+function drawCal() {
+  document.getElementById('calmo').textContent=new Date(calY,calM,1).toLocaleDateString('en-US',{month:'long',year:'numeric'});
+  const days=['Su','Mo','Tu','We','Th','Fr','Sa'];
+  let h=days.map(d=>`<div class="cdlbl">${d}</div>`).join('');
+  const first=new Date(calY,calM,1).getDay();
+  const total=new Date(calY,calM+1,0).getDate();
+  for(let i=0;i<first;i++) h+='<div class="ccell empty"></div>';
+  const ts=tk();
+  for(let d=1;d<=total;d++){
+    const k=`${calY}-${String(calM+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const de=entries.filter(e=>e.entry_date===k);
+    const bids=[...new Set(de.map(e=>e.bucket_id))];
+    const dots=bids.map(bid=>{const b=buckets.find(x=>x.id===bid);return b?`<div class="cdot" style="background:${gc(b.color).s}"></div>`:''}).join('');
+    h+=`<div class="ccell${k===ts?' today':''}" onclick="showDay('${k}')"><div class="cnum">${d}</div><div class="cdots">${dots}</div></div>`;
   }
-  grid.innerHTML = html;
+  document.getElementById('calgrid').innerHTML=h;
 }
 
-function changeMonth(dir) {
-  calMonth += dir;
-  if (calMonth > 11) { calMonth = 0; calYear++; }
-  if (calMonth < 0)  { calMonth = 11; calYear--; }
-  document.getElementById('dayDetail').classList.add('hidden');
-  renderCalendar();
-}
+function chMo(d){calM+=d;if(calM>11){calM=0;calY++;}if(calM<0){calM=11;calY--;}document.getElementById('ddetail').className='ddetail';drawCal();}
 
-function showDayDetail(key) {
-  const panel = document.getElementById('dayDetail');
-  const dayEntries = entries.filter(e => e.entry_date === key);
-  const d = new Date(key + 'T12:00:00');
-  const label = d.toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric' });
-  if (dayEntries.length === 0) {
-    panel.innerHTML = `<div class="day-detail-title">${label}</div><div class="day-empty">Nothing logged this day.</div>`;
-  } else {
-    const rows = dayEntries.map(e => {
-      const b = buckets.find(x => x.id === e.bucket_id);
-      const c = b ? getColor(b.color) : COLORS[0];
-      return `<div class="day-entry">
-        <div class="day-entry-dot" style="background:${c.solid}"></div>
-        <div class="day-entry-info">
-          <div class="day-entry-bucket">${b ? escHtml(b.name) : 'Unknown'}</div>
-          <div class="day-entry-note">${escHtml(e.note)}</div>
-        </div>
-      </div>`;
+function showDay(k){
+  const el=document.getElementById('ddetail');
+  const de=entries.filter(e=>e.entry_date===k);
+  const lbl=new Date(k+'T12:00:00').toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+  if(!de.length){el.innerHTML=`<div class="dtitle">${lbl}</div><div class="dempty">Nothing logged this day.</div>`;}
+  else{
+    const rows=de.map(e=>{const b=buckets.find(x=>x.id===e.bucket_id);const c=b?gc(b.color):COLORS[0];
+      return `<div class="dentry"><div class="dedot" style="background:${c.s}"></div><div><div class="debkt">${b?esc(b.name):'Unknown'}</div><div class="denote">${esc(e.note)}</div></div></div>`;
     }).join('');
-    panel.innerHTML = `<div class="day-detail-title">${label}</div>${rows}`;
+    el.innerHTML=`<div class="dtitle">${lbl}</div>${rows}`;
   }
-  panel.classList.remove('hidden');
+  el.className='ddetail on';
 }
 
 // ── Manage ──
-let newBucketColorSelected = 'teal';
-
-function renderColorSwatches() {
-  const cont = document.getElementById('colorSwatches');
-  if (!cont) return;
-  cont.innerHTML = COLORS.map(c =>
-    `<div class="color-swatch${c.name === newBucketColorSelected ? ' selected' : ''}" style="background:${c.solid}" onclick="selectColor('${c.name}')" title="${c.name}"></div>`
-  ).join('');
+function drawColors(){
+  const el=document.getElementById('mcolors'); if(!el)return;
+  el.innerHTML=COLORS.map(c=>`<div class="mswatch${c.n===selColor?' on':''}" style="background:${c.s}" onclick="pickCol('${c.n}')" title="${c.n}"></div>`).join('');
 }
+function pickCol(n){selColor=n;drawColors();}
 
-function selectColor(name) { newBucketColorSelected = name; renderColorSwatches(); }
-
-function renderManage() {
-  document.getElementById('manageList').innerHTML = buckets.map(b => {
-    const c = getColor(b.color);
-    return `<div class="manage-item">
-      <div class="manage-dot" style="background:${c.solid}"></div>
-      <span>${escHtml(b.name)}</span>
-      <button class="btn-del" onclick="deleteBucket('${b.id}')" title="Remove bucket">×</button>
-    </div>`;
+function drawManage(){
+  document.getElementById('mlist').innerHTML=buckets.map(b=>{
+    const c=gc(b.color);
+    return `<div class="mitem"><div class="mdot" style="background:${c.s}"></div><span>${esc(b.name)}</span><button class="mdel" onclick="doDelBucket('${b.id}')">&#215;</button></div>`;
   }).join('');
 }
 
-async function addBucket() {
-  const name = document.getElementById('newBucketName').value.trim();
-  if (!name) return;
-  const sortOrder = buckets.length;
-  const { data, error } = await sb.from('buckets').insert({ name, color: newBucketColorSelected, sort_order: sortOrder }).select().single();
-  if (!error && data) {
-    buckets.push(data);
-    document.getElementById('newBucketName').value = '';
+async function doAddBucket(){
+  const inp=document.getElementById('mname');
+  const errEl=document.getElementById('merr');
+  const name=inp.value.trim();
+  errEl.className='merr';
+  if(!name){errEl.textContent='Please enter a name.';errEl.className='merr on';return;}
+  const {data,error}=await sb.from('buckets').insert({name,color:selColor,sort_order:buckets.length}).select().single();
+  if(error){
+    errEl.textContent='Could not add: '+error.message;
+    errEl.className='merr on';
+  } else if(data){
+    buckets.push(data); inp.value=''; redraw();
   }
-  render();
 }
 
-async function deleteBucket(id) {
-  if (!confirm('Remove this bucket? Your logged entries will remain in history.')) return;
-  await sb.from('buckets').delete().eq('id', id);
-  buckets = buckets.filter(b => b.id !== id);
-  render();
+async function doDelBucket(id){
+  if(!confirm('Remove this bucket? Past entries stay in history.'))return;
+  const {error}=await sb.from('buckets').delete().eq('id',id);
+  if(error){alert('Could not remove: '+error.message);return;}
+  buckets=buckets.filter(b=>b.id!==id); redraw();
 }
 
 // ── Tabs ──
-function switchTab(name) {
-  document.querySelectorAll('.tab').forEach((t, i) => {
-    t.classList.toggle('active', ['buckets','calendar','manage'][i] === name);
-  });
-  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-  document.getElementById('view-' + name).classList.add('active');
-  if (name === 'calendar') renderCalendar();
-  if (name === 'manage') { renderManage(); renderColorSwatches(); }
+function goTab(name){
+  const tabs=['today','history','manage'];
+  document.querySelectorAll('.tab').forEach((t,i)=>t.className='tab'+(tabs[i]===name?' on':''));
+  document.querySelectorAll('.view').forEach(v=>v.className='view');
+  document.getElementById('v'+name.charAt(0).toUpperCase()+name.slice(1)).className='view on';
+  if(name==='history')drawCal();
+  if(name==='manage'){drawManage();drawColors();}
 }
 
-// ── Utility ──
-function escHtml(str) {
-  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
-// ── Boot ──
-(function init() {
-  const url = localStorage.getItem('dl_url');
-  const key = localStorage.getItem('dl_key');
-  if (url && key) {
-    document.getElementById('supabaseUrl').value = url;
-    document.getElementById('supabaseKey').value = key;
-    const opts = key.startsWith("sb_publishable_") ? { global: { headers: { Authorization: `Bearer ${key}` } } } : {};
-    sb = supabase.createClient(url, key.startsWith("sb_publishable_") ? "anon-placeholder" : key, opts);
-    startApp();
+// ── Init ──
+(function(){
+  const u=localStorage.getItem('dl_u'), k=localStorage.getItem('dl_k');
+  if(u&&k){
+    sb=supabase.createClient(u,k);
+    document.getElementById('sbUrl').value=u;
+    document.getElementById('sbKey').value=k;
+    boot();
   }
 })();
 </script>
