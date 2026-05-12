@@ -258,11 +258,9 @@ let futureNotes = [];
 let calYear, calMonth;
 let openAdd = null;
 let openExpand = null;
-let newBucketColor = 'teal';
 
 function getColor(name) { return COLORS.find(c => c.name === name) || COLORS[0]; }
 function todayKey() { return new Date().toISOString().slice(0,10); }
-function dateKey(d) { return d.toISOString().slice(0,10); }
 
 // ── Supabase connect ──
 async function connectSupabase() {
@@ -272,15 +270,21 @@ async function connectSupabase() {
   errEl.classList.add('hidden');
   if (!url || !key) { errEl.textContent = 'Please enter both your URL and API key.'; errEl.classList.remove('hidden'); return; }
   try {
-    sb = supabase.createClient(url, key);
-    // Quick test
+    const opts = key.startsWith("sb_publishable_") ? { global: { headers: { Authorization: `Bearer ${key}` } } } : {};
+    sb = supabase.createClient(url, key.startsWith("sb_publishable_") ? "anon-placeholder" : key, opts);
+    // Quick test — if tables don't exist yet this will return an error we can show
     const { error } = await sb.from('buckets').select('id').limit(1);
     if (error) throw error;
     localStorage.setItem('dl_url', url);
     localStorage.setItem('dl_key', key);
     startApp();
   } catch(e) {
-    errEl.textContent = 'Could not connect: ' + (e.message || e). + '. Check your URL and key, and make sure the tables exist.';
+    const msg = e.message || String(e);
+    if (msg.includes('relation') || msg.includes('does not exist')) {
+      errEl.textContent = 'Connected, but the tables are missing. Please run the SQL setup in Supabase first.';
+    } else {
+      errEl.textContent = 'Could not connect: ' + msg + '. Double-check your URL and key.';
+    }
     errEl.classList.remove('hidden');
     sb = null;
   }
@@ -594,7 +598,8 @@ function escHtml(str) {
   if (url && key) {
     document.getElementById('supabaseUrl').value = url;
     document.getElementById('supabaseKey').value = key;
-    sb = supabase.createClient(url, key);
+    const opts = key.startsWith("sb_publishable_") ? { global: { headers: { Authorization: `Bearer ${key}` } } } : {};
+    sb = supabase.createClient(url, key.startsWith("sb_publishable_") ? "anon-placeholder" : key, opts);
     startApp();
   }
 })();
